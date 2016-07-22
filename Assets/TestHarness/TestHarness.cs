@@ -1,12 +1,16 @@
 ﻿using UnityEngine;
-using System.Collections;
+using UnityEditor;
 using System.Collections.Generic;
+using System.Linq;
 
 public class TestHarness : MonoBehaviour
 {
     public GameObject HighlightPrefab;
     TestSelectable currentSelectable;
     TestSelectableArea currentSelectableArea;
+
+    AudioSource audioSource;
+    List<AudioClip> audioClips;
 
     void Awake()
     {
@@ -17,10 +21,10 @@ public class TestHarness : MonoBehaviour
     void Start()
     {
         currentSelectable = GetComponent<TestSelectable>();
-        
+
         KMBombModule[] modules = FindObjectsOfType<KMBombModule>();
         currentSelectable.Children = new TestSelectable[modules.Length];
-        for (int i=0; i < modules.Length; i++)
+        for (int i = 0; i < modules.Length; i++)
         {
             currentSelectable.Children[i] = modules[i].GetComponent<TestSelectable>();
             modules[i].GetComponent<TestSelectable>().Parent = currentSelectable;
@@ -30,6 +34,42 @@ public class TestHarness : MonoBehaviour
         }
 
         currentSelectable.ActivateChildSelectableAreas();
+
+
+        //Load all the audio clips in the asset database
+        audioClips = new List<AudioClip>();
+        string[] audioClipAssetGUIDs = AssetDatabase.FindAssets("t:AudioClip");
+
+        foreach (var guid in audioClipAssetGUIDs)
+        {
+            AudioClip clip = AssetDatabase.LoadAssetAtPath<AudioClip>(AssetDatabase.GUIDToAssetPath(guid));
+
+            if (clip != null)
+            {
+                audioClips.Add(clip);
+            }
+        }
+
+        audioSource = gameObject.AddComponent<AudioSource>();
+        KMAudio[] kmAudios = FindObjectsOfType<KMAudio>();
+        foreach (KMAudio kmAudio in kmAudios)
+        {
+            kmAudio.HandlePlaySoundAtTransform += PlaySoundHandler;
+        }
+    }
+
+    protected void PlaySoundHandler(string clipName, Transform t)
+    {
+        if (audioClips.Count > 0)
+        {
+            AudioClip clip = audioClips.Where(a => a.name == clipName).First();
+
+            if (clip != null)
+            {
+                audioSource.transform.position = t.position;
+                audioSource.PlayOneShot(clip);
+            }
+        }
     }
 
     void Update()
@@ -124,7 +164,24 @@ public class TestHarness : MonoBehaviour
             testSelectable.Children = new TestSelectable[selectable.Children.Length];
             for (int i = 0; i < selectable.Children.Length; i++)
             {
-                testSelectable.Children[i] = selectable.Children[i].GetComponent<TestSelectable>();
+                if (selectable.Children[i] != null)
+                {
+                    testSelectable.Children[i] = selectable.Children[i].GetComponent<TestSelectable>();
+                }
+            }
+        }
+    }
+
+    void OnGUI()
+    {
+        if (GUILayout.Button("Activate Module"))
+        {
+            foreach (KMBombModule module in GameObject.FindObjectsOfType<KMBombModule>())
+            {
+                if (module.OnActivate != null)
+                {
+                    module.OnActivate();
+                }
             }
         }
     }

@@ -79,25 +79,25 @@ public class TestHarness : MonoBehaviour
         RaycastHit hit;
         int layerMask = 1 << 11;
         bool rayCastHitSomething = Physics.Raycast(ray, out hit, 1000, layerMask);
-        if(rayCastHitSomething)
+        if (rayCastHitSomething)
         {
             TestSelectableArea hitArea = hit.collider.GetComponent<TestSelectableArea>();
             if (hitArea != null)
             {
                 if (currentSelectableArea != hitArea)
                 {
-                    if(currentSelectableArea != null)
+                    if (currentSelectableArea != null)
                     {
                         currentSelectableArea.Selectable.Deselect();
                     }
-                    
+
                     hitArea.Selectable.Select();
                     currentSelectableArea = hitArea;
                 }
             }
             else
             {
-                if(currentSelectableArea != null)
+                if (currentSelectableArea != null)
                 {
                     currentSelectableArea.Selectable.Deselect();
                     currentSelectableArea = null;
@@ -113,9 +113,9 @@ public class TestHarness : MonoBehaviour
             }
         }
 
-        if(Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0))
         {
-            if(currentSelectableArea != null && currentSelectableArea.Selectable.Interact())
+            if (currentSelectableArea != null && currentSelectableArea.Selectable.Interact())
             {
                 currentSelectable.DeactivateChildSelectableAreas(currentSelectableArea.Selectable);
                 currentSelectable = currentSelectableArea.Selectable;
@@ -123,9 +123,9 @@ public class TestHarness : MonoBehaviour
             }
         }
 
-        if(Input.GetMouseButtonDown(1))
+        if (Input.GetMouseButtonDown(1))
         {
-            if(currentSelectable.Parent != null)
+            if (currentSelectable.Parent != null)
             {
                 currentSelectable.DeactivateChildSelectableAreas(currentSelectable.Parent);
                 currentSelectable = currentSelectable.Parent;
@@ -138,7 +138,7 @@ public class TestHarness : MonoBehaviour
     {
         List<KMHighlightable> highlightables = new List<KMHighlightable>(GameObject.FindObjectsOfType<KMHighlightable>());
 
-        foreach(KMHighlightable highlightable in highlightables)
+        foreach (KMHighlightable highlightable in highlightables)
         {
             TestHighlightable highlight = highlightable.gameObject.AddComponent<TestHighlightable>();
 

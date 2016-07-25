@@ -19,9 +19,9 @@ public class TwoBitsModule : MonoBehaviour
     }
 
     public TextMesh DisplayText;
-    public KMSelectable[] Buttons;
-    public KMSelectable QueryButton;
-    public KMSelectable SubmitButton;
+    public Button[] Buttons;
+    public Button QueryButton;
+    public Button SubmitButton;
 
     public AudioClip CharacterEntryClip;
     public AudioClip ProcessingClip;
@@ -61,14 +61,14 @@ public class TwoBitsModule : MonoBehaviour
         for (int i = 0; i < Buttons.Length; i++)
         {
             int buttonIndex = i;
-            Buttons[i].OnInteract += delegate () {
+            Buttons[i].Selectable.OnInteract += delegate () {
                 OnButtonPress(buttonIndex);
                 return false;
             };
         }
 
-        QueryButton.OnInteract += OnQuery;
-        SubmitButton.OnInteract += OnSubmit;
+        QueryButton.Selectable.OnInteract += OnQuery;
+        SubmitButton.Selectable.OnInteract += OnSubmit;
 
         currentState = State.Inactive;
         currentQuery = new char[2];
@@ -87,6 +87,8 @@ public class TwoBitsModule : MonoBehaviour
 
     protected void OnButtonPress(int buttonIndex)
     {
+        Buttons[buttonIndex].Push();
+
         switch (currentState)
         {
             case State.Inactive:
@@ -135,6 +137,7 @@ public class TwoBitsModule : MonoBehaviour
 
     protected bool OnQuery()
     {
+        QueryButton.Push();
         switch (currentState)
         {
             case State.Inactive:
@@ -181,6 +184,7 @@ public class TwoBitsModule : MonoBehaviour
 
     protected bool OnSubmit()
     {
+        SubmitButton.Push();
         switch (currentState)
         {
             case State.Inactive:

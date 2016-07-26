@@ -213,7 +213,7 @@ public class TwoBitsModule : MonoBehaviour
 
     protected void ChangeState(State state)
     {
-        if (!gameObject.activeSelf)
+        if (!gameObject.activeInHierarchy)
         {
             return;
         }

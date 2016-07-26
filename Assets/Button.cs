@@ -5,18 +5,11 @@ public class Button : MonoBehaviour
 {
     public Animator Animator;
     public KMAudio KMAudio;
-    public KMSelectable Selectable { get; protected set; }
-
-    
-
-    void Awake()
-    {
-        Selectable = GetComponent<KMSelectable>();
-    }
+    public KMSelectable Selectable;
 
     public void Push()
     {
-        Animator.SetTrigger("Push");
+        Animator.Play("button_push", -1, 0);
         KMAudio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
     }
 }

@@ -23,8 +23,8 @@ public class TwoBitsModule : MonoBehaviour
     public Button QueryButton;
     public Button SubmitButton;
 
-    public AudioClip CharacterEntryClip;
-    public AudioClip ProcessingClip;
+    public KMAudio KMAudio;
+    public KMBombInfo BombInfo;
 
     public int NUM_ITERATIONS = 3;
 
@@ -39,9 +39,8 @@ public class TwoBitsModule : MonoBehaviour
     protected string ERROR_STRING = "ERROR";
     protected string INCORRECT_SUBMISSION_STRING = "INCORRECT";
 
-    protected KMBombInfo bombInfo;
     protected KMBombModule module;
-    protected KMAudio kmAudio;
+    
     protected State currentState;
     protected char[] currentQuery;
     protected int firstQueryCode;
@@ -52,16 +51,14 @@ public class TwoBitsModule : MonoBehaviour
 
     void Awake()
     {
-        bombInfo = gameObject.AddComponent<KMBombInfo>();
-
-        kmAudio = GetComponent<KMAudio>();
         module = GetComponent<KMBombModule>();
         module.OnActivate += OnActivate;
 
         for (int i = 0; i < Buttons.Length; i++)
         {
             int buttonIndex = i;
-            Buttons[i].Selectable.OnInteract += delegate () {
+            Buttons[i].Selectable.OnInteract += delegate ()
+            {
                 OnButtonPress(buttonIndex);
                 return false;
             };
@@ -76,6 +73,8 @@ public class TwoBitsModule : MonoBehaviour
         CreateRules();
 
         firstQueryCode = CalculateFirstQueryCode();
+
+        Debug.LogFormat("Starting code is {0}. Solution is {1}", firstQueryCode, CalculateCorrectSubmission());
 
         UpdateDisplay();
     }
@@ -111,7 +110,6 @@ public class TwoBitsModule : MonoBehaviour
                         {
                             validEntry = true;
                             currentQuery[i] = buttonLabels[buttonIndex];
-                            kmAudio.PlaySoundAtTransform(CharacterEntryClip.name, transform);
                             break;
                         }
                     }
@@ -217,6 +215,12 @@ public class TwoBitsModule : MonoBehaviour
     {
         StopAllCoroutines();
         currentState = state;
+
+        if (!gameObject.activeSelf)
+        {
+            return;
+        }
+
         switch (currentState)
         {
             case State.Idle:
@@ -253,7 +257,7 @@ public class TwoBitsModule : MonoBehaviour
                 break;
             case State.SubmittingResult:
                 {
-                    kmAudio.PlaySoundAtTransform(ProcessingClip.name, transform);
+                    KMAudio.PlaySoundAtTransform("processing", transform);
                     UpdateDisplay();
 
                     if (CalculateCorrectSubmission().Equals(GetCurrentQueryString()))
@@ -351,7 +355,7 @@ public class TwoBitsModule : MonoBehaviour
     {
         //Batteries
         int batteryCount = 0;
-        List<string> batteryResponses = bombInfo.QueryWidgets(KMBombInfo.QUERYKEY_GET_BATTERIES, null);
+        List<string> batteryResponses = BombInfo.QueryWidgets(KMBombInfo.QUERYKEY_GET_BATTERIES, null);
         foreach (string response in batteryResponses)
         {
             Dictionary<string, int> responseDict = JsonConvert.DeserializeObject<Dictionary<string, int>>(response);
@@ -362,7 +366,7 @@ public class TwoBitsModule : MonoBehaviour
         //Serial Number
         int serialFirstLetterModifier = 0;
         string serialNumber = "0";
-        List<string> serialResponses = bombInfo.QueryWidgets(KMBombInfo.QUERYKEY_GET_SERIAL_NUMBER, null);
+        List<string> serialResponses = BombInfo.QueryWidgets(KMBombInfo.QUERYKEY_GET_SERIAL_NUMBER, null);
         if (serialResponses.Count > 0)
         {
             serialNumber = JsonConvert.DeserializeObject<Dictionary<string, string>>(serialResponses[0])["serial"];
@@ -384,7 +388,7 @@ public class TwoBitsModule : MonoBehaviour
         //Ports
         bool hasStereoRCAPort = false;
         bool hasRJ45Port = false;
-        List<string> portResponses = bombInfo.QueryWidgets(KMBombInfo.QUERYKEY_GET_PORTS, null);
+        List<string> portResponses = BombInfo.QueryWidgets(KMBombInfo.QUERYKEY_GET_PORTS, null);
         foreach (var response in portResponses)
         {
             var responseDict = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(response);
@@ -406,7 +410,9 @@ public class TwoBitsModule : MonoBehaviour
             code *= 2;
         }
 
-        return code % 100;
+        code = code % 100;
+
+        return code;
     }
 
     protected string CalculateCorrectSubmission()

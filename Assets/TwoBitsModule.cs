@@ -34,7 +34,7 @@ public class TwoBitsModule : MonoBehaviour
     public float TimeSubmitting = 5f;
 
     protected static char[] buttonLabels = new char[] { 'b', 'c', 'd', 'e', 'g', 'k', 'p', 't', 'v', 'z' };
-    protected static List<char> alphabet = new List<char>() { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' };
+    protected static List<char> alphabet = new List<char>() { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' };
 
     protected string ERROR_STRING = "ERROR";
     protected string INCORRECT_SUBMISSION_STRING = "INCORRECT";
@@ -70,17 +70,17 @@ public class TwoBitsModule : MonoBehaviour
         currentState = State.Inactive;
         currentQuery = new char[2];
 
+        UpdateDisplay();
+    }
+
+    protected void OnActivate()
+    {
         CreateRules();
 
         firstQueryCode = CalculateFirstQueryCode();
 
         Debug.LogFormat("Starting code is {0}. Solution is {1}", firstQueryCode, CalculateCorrectSubmission());
 
-        UpdateDisplay();
-    }
-
-    protected void OnActivate()
-    {
         ChangeState(State.Idle);
     }
 
@@ -213,13 +213,13 @@ public class TwoBitsModule : MonoBehaviour
 
     protected void ChangeState(State state)
     {
-        StopAllCoroutines();
-        currentState = state;
-
         if (!gameObject.activeSelf)
         {
             return;
         }
+
+        StopAllCoroutines();
+        currentState = state;
 
         switch (currentState)
         {
@@ -316,6 +316,8 @@ public class TwoBitsModule : MonoBehaviour
             queryLookups.Add(responses[i], queries[i]);
         }
 
+        //Now make the responses differ on a per-module basis
+        rand = new System.Random(UnityEngine.Random.Range(0, int.MaxValue));
         queries.Shuffle<string>(rand);
 
         for (int i = 0; i < 100; i++)
@@ -377,7 +379,7 @@ public class TwoBitsModule : MonoBehaviour
             int index = alphabet.IndexOf(serialNumber[i]);
             if (index >= 0)
             {
-                serialFirstLetterModifier = index;
+                serialFirstLetterModifier = index + 1;
                 break;
             }
         }

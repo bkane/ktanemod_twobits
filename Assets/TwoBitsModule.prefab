@@ -3479,7 +3479,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   HighlightScale: {x: 1, y: 1, z: 1}
-  OutlineAmount: 0.0095
+  OutlineAmount: 0
 --- !u!114 &11410972
 MonoBehaviour:
   m_ObjectHideFlags: 1

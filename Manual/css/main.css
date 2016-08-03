@@ -41,7 +41,7 @@ textarea {
 html {
     font-family: 'Special Elite', 'Courier New', monospace;
     font-size: 1em;
-    line-height: 1.4;
+    line-height: 1.3;
 }
 
 /*
@@ -125,7 +125,7 @@ body {
 
 p,
 pre {
-    margin: .5em 0 1em; /* bring top of paragraphs closer to headers */
+    margin: .5em 0 .75em; /* bring top of paragraphs closer to headers */
 }
 
 em {

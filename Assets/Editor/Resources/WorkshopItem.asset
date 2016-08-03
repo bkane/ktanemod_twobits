@@ -11,8 +11,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5cf2299c8864afe4ab42466f546ae20d, type: 3}
   m_Name: WorkshopItem
   m_EditorClassIdentifier: 
-  WorkshopPublishedFileID: 0
+  WorkshopPublishedFileID: 731933084
   Title: Two Bits Module
-  Description: 
-  PreviewImage: {fileID: 0}
-  Tags: []
+  Description: "[h1]About[/h1]\r\nThis poorly programmed lookup device is as maddening
+    with its slow responses as it is unforgiving with ill-timed inputs. Patience required.\r\n\r\n[h1]Manual[/h1]\r\nhttps://bkane.github.io/ktane/mods/twobits/Manual/\r\n\r\n[h1]Notes[/h1]\r\nThis
+    module has a lot of information hidden behind queries that the defuser must make.
+    It is intentionally cumbersome to interact with and will require careful multi-tasking
+    and time management when paired with other modules.\r\n\r\n[h1]Module type name[/h1]\r\nTwoBits\r\n\r\n[h1]Source
+    Code[/h1]\r\nIf there are any developers interested in seeing how this mod was
+    created, the source code can be found at https://github.com/bkane/ktanemod_twobits
+    .\r"
+  PreviewImage: {fileID: 2800000, guid: 160d7ffeed1a6a449bb6418a1966f19d, type: 3}
+  Tags:
+  - Regular Module

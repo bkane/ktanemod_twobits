@@ -11,5 +11,6 @@ public class Button : MonoBehaviour
     {
         Animator.Play("button_push", -1, 0);
         KMAudio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
+        Selectable.AddInteractionPunch();
     }
 }

@@ -23,7 +23,8 @@ public class TestHarness : MonoBehaviour
         currentSelectable = GetComponent<TestSelectable>();
 
         KMBombModule[] modules = FindObjectsOfType<KMBombModule>();
-        currentSelectable.Children = new TestSelectable[modules.Length];
+        KMNeedyModule[] needyModules = FindObjectsOfType<KMNeedyModule>();
+        currentSelectable.Children = new TestSelectable[modules.Length + needyModules.Length];
         for (int i = 0; i < modules.Length; i++)
         {
             currentSelectable.Children[i] = modules[i].GetComponent<TestSelectable>();
@@ -31,6 +32,23 @@ public class TestHarness : MonoBehaviour
 
             modules[i].OnPass = delegate () { Debug.Log("Module Passed"); return false; };
             modules[i].OnStrike = delegate () { Debug.Log("Strike"); return false; };
+        }
+
+        for (int i = 0; i < needyModules.Length; i++)
+        {
+            currentSelectable.Children[modules.Length + i] = needyModules[i].GetComponent<TestSelectable>();
+            needyModules[i].GetComponent<TestSelectable>().Parent = currentSelectable;
+
+            needyModules[i].OnPass = delegate ()
+            {
+                Debug.Log("Module Passed");
+                return false;
+            };
+            needyModules[i].OnStrike = delegate ()
+            {
+                Debug.Log("Strike");
+                return false;
+            };
         }
 
         currentSelectable.ActivateChildSelectableAreas();
@@ -123,9 +141,17 @@ public class TestHarness : MonoBehaviour
             }
         }
 
+        if (Input.GetMouseButtonUp(0))
+        {
+            if (currentSelectableArea != null)
+            {
+                currentSelectableArea.Selectable.InteractEnded();
+            }
+        }
+
         if (Input.GetMouseButtonDown(1))
         {
-            if (currentSelectable.Parent != null)
+            if (currentSelectable.Parent != null && currentSelectable.Cancel())
             {
                 currentSelectable.DeactivateChildSelectableAreas(currentSelectable.Parent);
                 currentSelectable = currentSelectable.Parent;
@@ -183,6 +209,66 @@ public class TestHarness : MonoBehaviour
                     module.OnActivate();
                 }
             }
+            foreach (KMNeedyModule module in GameObject.FindObjectsOfType<KMNeedyModule>())
+            {
+            	if (module.OnActivate != null)
+            	{
+            		module.OnActivate();
+            	}
+            }
         }
+
+        if (GUILayout.Button("Activate Needy Modules"))
+        {
+            foreach (KMNeedyModule needyModule in GameObject.FindObjectsOfType<KMNeedyModule>())
+            {
+                if (needyModule.OnNeedyActivation != null)
+                {
+                    needyModule.OnNeedyActivation();
+                }
+            }
+        }
+
+        if (GUILayout.Button("Deactivate Needy Modules"))
+        {
+            foreach (KMNeedyModule needyModule in GameObject.FindObjectsOfType<KMNeedyModule>())
+            {
+                if (needyModule.OnNeedyDeactivation != null)
+                {
+                    needyModule.OnNeedyDeactivation();
+                }
+            }
+        }
+
+        if (GUILayout.Button("Match game lighting"))
+        {
+            MatchGameLighting();
+        }
+    }
+
+    //Sets up lighting to be the same for light a module at 0,0 as in the unmodded gameplay room on the picked up bomb
+    protected void MatchGameLighting()
+    {
+        QualitySettings.pixelLightCount = 0;
+
+        //Set ambient light
+        RenderSettings.ambientLight = new Color(151f / 255f, 150f / 255f, 144f / 255f);
+        RenderSettings.ambientIntensity = 1.0f;
+        RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+
+        //Disable all other lights
+        foreach (Light l in FindObjectsOfType<Light>())
+        {
+            l.enabled = false;
+        }
+
+        GameObject pointLight = new GameObject("Lamp");
+        Light light = pointLight.AddComponent<Light>();
+        
+        light.type = LightType.Point;
+        light.range = 4.245148f;
+        light.transform.position = new Vector3(-1.089771f, 0.9635483f, 0.5165237f);
+        light.color = new Color(255f / 255f, 245f / 255f, 227f / 255f);
+        light.intensity = 2.7f;
     }
 }

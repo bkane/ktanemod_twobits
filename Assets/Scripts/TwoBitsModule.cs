@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using Newtonsoft.Json;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,12 +46,18 @@ public class TwoBitsModule : MonoBehaviour
     protected char[] currentQuery;
     protected int firstQueryCode;
     protected int lastResult;
+    protected bool twitchPlayStrike;
 
     Dictionary<string, int> queryResponses;
     Dictionary<int, string> queryLookups;
 
+    private static int _moduleIdCounter = 1;
+    private int _moduleId;
+
     void Awake()
     {
+        _moduleId = _moduleIdCounter++;
+
         module = GetComponent<KMBombModule>();
         module.OnActivate += OnActivate;
 
@@ -79,7 +86,10 @@ public class TwoBitsModule : MonoBehaviour
 
         firstQueryCode = CalculateFirstQueryCode();
 
-        Debug.LogFormat("Starting code is {0}. Solution is {1}", firstQueryCode, CalculateCorrectSubmission());
+        
+        Debug.LogFormat("[Two Bits #{1}] Starting code is {0}", firstQueryCode, _moduleId);
+        var correct = CalculateCorrectSubmission(true);
+        Debug.LogFormat("[Two Bits #{1}] Correct Submission response is {0}", correct, _moduleId);
 
         ChangeState(State.Idle);
     }
@@ -93,7 +103,7 @@ public class TwoBitsModule : MonoBehaviour
             case State.Inactive:
                 {
                     //Don't perform any real logic or change states if the module isn't active yet
-                    module.HandleStrike();
+                    HandleError();
                 }
                 break;
             case State.Complete:
@@ -141,7 +151,7 @@ public class TwoBitsModule : MonoBehaviour
             case State.Inactive:
                 {
                     //Don't perform any real logic or change states if the module isn't active yet
-                    module.HandleStrike();
+                    HandleError();
                 }
                 break;
             case State.Complete:
@@ -188,7 +198,7 @@ public class TwoBitsModule : MonoBehaviour
             case State.Inactive:
                 {
                     //Don't perform any real logic or change states if the module isn't active yet
-                    module.HandleStrike();
+                    HandleError();
                 }
                 break;
             case State.Complete:
@@ -272,13 +282,12 @@ public class TwoBitsModule : MonoBehaviour
                 break;
             case State.IncorrectSubmission:
                 {
-                    module.HandleStrike();
-                    UpdateDisplay();
-                    StartCoroutine(FlashErrorCoroutine(INCORRECT_SUBMISSION_STRING));
+                    HandleError();
                 }
                 break;
             case State.Complete:
                 {
+                    Debug.LogFormat("[Two Bits #{0}] Module solved",_moduleId);
                     module.HandlePass();
                     UpdateDisplay();
                 }
@@ -288,8 +297,35 @@ public class TwoBitsModule : MonoBehaviour
 
     protected void HandleError()
     {
+        twitchPlayStrike = true;
         module.HandleStrike();
-        ChangeState(State.ShowingError);
+        switch (currentState)
+        {
+            case State.Inactive:
+                Debug.LogFormat("[Two Bits #{0}] Pressed a button while the module was sleeping", _moduleId);
+                break;
+            case State.IncorrectSubmission:
+                Debug.LogFormat("[Two Bits #{0}] Submitted {1}, Expected {2}", _moduleId, GetCurrentQueryString(),
+                    CalculateCorrectSubmission());
+                UpdateDisplay();
+                StartCoroutine(FlashErrorCoroutine(INCORRECT_SUBMISSION_STRING));
+                break;
+            case State.Idle:
+                if (GetCurrentQueryString().Contains('_'))
+                {
+                    Debug.LogFormat("[Two Bits #{0}] Queried incomplete input {1}", _moduleId, GetCurrentQueryString());
+                }
+                else
+                {
+                    Debug.LogFormat("[Two Bits #{0}] Pressed a button other than Query or Submit");
+                }
+                ChangeState(State.ShowingError);
+                break;
+            default:
+                Debug.LogFormat("[Two Bits #{0}] Pressed a button while the module was working",_moduleId);
+                ChangeState(State.ShowingError);
+                break;
+        }
     }
 
     protected void CreateRules()
@@ -351,6 +387,58 @@ public class TwoBitsModule : MonoBehaviour
 
         Debug.LogFormat("QueryLookups: {0}", string.Join("\n", queryLookups.Keys.Select(i => string.Format("[{0}]: {1}", i, queryLookups[i])).ToArray()));
         Debug.LogFormat("QueryResponses: {0}", string.Join("\n", queryResponses.Keys.Select(s => string.Format("[{0}]: {1}", s, queryResponses[s])).ToArray()));
+    }
+
+    protected IEnumerator ProcessTwitchCommand(string command)
+    {
+        twitchPlayStrike = false;
+        var split = command.ToLowerInvariant().Split(new[] {" "}, StringSplitOptions.RemoveEmptyEntries);
+
+        if (split.Length < 2 || split[0] != "press")
+            yield break;
+
+        foreach (var x in split.Skip(1))
+        {
+            switch (x)
+            {
+                case "query":
+                case "submit":
+                    break;
+                default:
+                    foreach (var y in x)
+                        if (!buttonLabels.Contains(y))
+                            yield break;
+                    break;
+            }
+        }
+
+        yield return "Two Bits Solve Attempt";
+        foreach (var x in split.Skip(1))
+        {
+            switch (x)
+            {
+                case "query":
+                    OnQuery();
+                    break;
+                case "submit":
+                    OnSubmit();
+                    break;
+                default:
+                    foreach (var y in x)
+                    {
+                        OnButtonPress("bcdegkptvz".IndexOf(y));
+                        if (twitchPlayStrike)
+                            yield break;
+                    }
+                    break;
+            }
+            yield return new WaitForSeconds(0.1f);
+        }
+
+        if(currentState == State.SubmittingResult)
+            yield return GetCurrentQueryString().Equals(CalculateCorrectSubmission())
+                        ? "solve"
+                        : "strike";
     }
 
     protected int CalculateFirstQueryCode()
@@ -417,7 +505,7 @@ public class TwoBitsModule : MonoBehaviour
         return code;
     }
 
-    protected string CalculateCorrectSubmission()
+    protected string CalculateCorrectSubmission(bool DebugLog = false)
     {
         int queryInt = firstQueryCode;
         string queryString = string.Empty;
@@ -426,6 +514,9 @@ public class TwoBitsModule : MonoBehaviour
         {
             queryString = queryLookups[queryInt];
             queryInt = queryResponses[queryString];
+            if (DebugLog && i < NUM_ITERATIONS)
+                Debug.LogFormat("[Two Bits #{0}] Query #{1}: {2}, Response: {3}", _moduleId, i + 1, queryString,
+                    queryInt);
         }
 
         return queryString;

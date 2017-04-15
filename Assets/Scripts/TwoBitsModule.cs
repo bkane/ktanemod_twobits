@@ -394,35 +394,51 @@ public class TwoBitsModule : MonoBehaviour
         twitchPlayStrike = false;
         var split = command.ToLowerInvariant().Split(new[] {" "}, StringSplitOptions.RemoveEmptyEntries);
 
-        if (split[0] != "query" && split[0] != "submit")
+        if (split.Length < 2 || split[0] != "press")
             yield break;
 
-        foreach(var x in split.Skip(1))
-            foreach(var y in x)
-                if (!buttonLabels.Contains(y))
-                    yield break;
+        foreach (var x in split.Skip(1))
+        {
+            switch (x)
+            {
+                case "query":
+                case "submit":
+                    break;
+                default:
+                    foreach (var y in x)
+                        if (!buttonLabels.Contains(y))
+                            yield break;
+                    break;
+            }
+        }
 
         yield return "Two Bits Solve Attempt";
-        foreach(var x in split.Skip(1))
-            foreach (var y in x)
+        foreach (var x in split.Skip(1))
+        {
+            switch (x)
             {
-                OnButtonPress("bcdegkptvz".IndexOf(y));
-                if (twitchPlayStrike)
-                    yield break;
-                yield return new WaitForSeconds(0.1f);
+                case "query":
+                    OnQuery();
+                    break;
+                case "submit":
+                    OnSubmit();
+                    break;
+                default:
+                    foreach (var y in x)
+                    {
+                        OnButtonPress("bcdegkptvz".IndexOf(y));
+                        if (twitchPlayStrike)
+                            yield break;
+                    }
+                    break;
             }
+            yield return new WaitForSeconds(0.1f);
+        }
 
-        if (split[0] == "query")
-        {
-            OnQuery();
-        }
-        else
-        {
+        if(currentState == State.SubmittingResult)
             yield return GetCurrentQueryString().Equals(CalculateCorrectSubmission())
-                ? "solve"
-                : "strike";
-            OnSubmit();
-        }
+                        ? "solve"
+                        : "strike";
     }
 
     protected int CalculateFirstQueryCode()
